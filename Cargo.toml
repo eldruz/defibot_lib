@@ -1,0 +1,6 @@
+[package]
+name = "defibot"
+version = "0.1.0"
+authors = ["Andrés Saraos Luna <andres.saraos-luna@imie.fr>"]
+
+[dependencies]
