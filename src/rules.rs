@@ -10,8 +10,10 @@ pub trait ResultsPersistence {
     fn add_game(&mut self, game: &str);
 }
 
-pub trait ResultsRules {
-    fn validate_ft<'a, 'b>(ft: &'a mut Ft, player: &'b str, confirm: bool) -> Result<&'a Ft, &'static str> {
+pub struct ResultsRules {}
+
+impl ResultsRules {
+    pub fn validate_ft<'a, 'b>(ft: &'a mut Ft, player: &'b str, confirm: bool) -> Result<&'a Ft, &'static str> {
         if ft.player_b.nick == player && ft.state == FtState::Pending {
             // change the state depending of the confirm
             match confirm {
