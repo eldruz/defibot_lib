@@ -5,6 +5,12 @@ pub trait ResultsPersistence {
     fn get_game(&mut self, g_id: &str) -> Option<&mut Game>;
     fn get_ft(&mut self, ft: usize) -> Option<&mut Ft>;
 
+    fn get_all_ft(&self) -> Option<&[Ft]>;
+
+    fn get_results_with_game<'a, 'b>(&self, game: &'b str) -> Option<Vec<Ft>>;
+    fn get_results_with_player<'a, 'b>(&self, player: &'b str) -> Option<Vec<Ft>>;
+    fn get_win_list<'a, 'b>(&self, player: &'b str) -> Option<Vec<Ft>>;
+
     fn register_ft(&mut self, game: &str, player_a: &str, player_b: &str, score_a: u8, score_b: u8);
     fn add_player(&mut self, player: &str);
     fn add_game(&mut self, game: &str);
@@ -50,18 +56,5 @@ impl ResultsRules {
                 Some(player_win.nick == player)
             }
         }
-    }
-
-    pub fn win_list<'a, 'b>(results: &'a [Ft], player: &'b str) -> Vec<&'a Ft> {
-        let mut wins: Vec<&Ft> = Vec::new();
-        for result in results.iter() {
-            match ResultsRules::is_winner(result, player) {
-                None => (),
-                Some(response) => {
-                    if response {wins.push(result);}
-                }
-            }
-        }
-        wins
     }
 }
