@@ -26,4 +26,42 @@ impl ResultsRules {
             Err("Player was not part of this FT")
         }
     }
+
+    pub fn winner(ft: &Ft) -> Result<&Player, &'static str> {
+        match ft.state {
+            FtState::Pending => Err("The result is not approved yet."),
+            FtState::Canceled => Err("The result was canceled."),
+            FtState::Confirmed => {
+                if ft.score_a > ft.score_b {
+                    Ok(&ft.player_a)
+                }
+                else {
+                    Ok(&ft.player_b)
+                }
+            }
+        }
+    }
+
+    pub fn is_winner(ft: &Ft, player: &str) -> Option<bool> {
+        let player_win = ResultsRules::winner(ft);
+        match player_win  {
+            Err(_) => None,
+            Ok(player_win) => {
+                Some(player_win.nick == player)
+            }
+        }
+    }
+
+    pub fn win_list<'a, 'b>(results: &'a [Ft], player: &'b str) -> Vec<&'a Ft> {
+        let mut wins: Vec<&Ft> = Vec::new();
+        for result in results.iter() {
+            match ResultsRules::is_winner(result, player) {
+                None => (),
+                Some(response) => {
+                    if response {wins.push(result);}
+                }
+            }
+        }
+        wins
+    }
 }
