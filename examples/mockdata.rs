@@ -1,13 +1,13 @@
-extern crate defibot;
+extern crate defibot_lib;
 
-use defibot::model::{
+use defibot_lib::model::{
     Player,
     Game,
     Ft,
 };
 
-use defibot::rules::ResultsPersistence;
-use defibot::rules::ResultsRules;
+use defibot_lib::rules::ResultsPersistence;
+use defibot_lib::rules::ResultsRules;
 
 #[derive(Debug)]
 pub struct MockData {
