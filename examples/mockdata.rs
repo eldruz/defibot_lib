@@ -3,151 +3,201 @@ extern crate defibot_lib;
 use defibot_lib::model::{
     Player,
     Game,
-    Ft,
+    Defi,
+    DefiResult,
+    DefiRequest,
 };
 
-use defibot_lib::rules::ResultsPersistence;
-use defibot_lib::rules::ResultsRules;
+use defibot_lib::rules::Persistence;
+use defibot_lib::rules::DefiRules;
 
 #[derive(Debug)]
 pub struct MockData {
-    pub results: Vec<Ft>,
+    pub results: Vec<Defi>,
+    pub requests: Vec<DefiRequest>,
     pub players: Vec<Player>,
-    pub games: Vec<Game>,
-    pub next_id: usize,
 }
 
 impl MockData {
     fn new() -> MockData {
-        let default_game = Game {name: String::from("BouleFighter")};
-        let another_game = Game {name: String::from("Marvel VS BouleBoule")};
         let default_pone = Player {nick: String::from("eldruz")};
-        let default_ptwo = Player {nick: String::from("quinonino")};
-        MockData { results: vec![], players: vec![default_pone, default_ptwo], games: vec![default_game, another_game], next_id: 0}
+        let default_ptwo = Player {nick: String::from("joaquin")};
+        MockData { results: vec![], requests: vec![], players: vec![default_pone, default_ptwo] }
     }
 }
 
-impl ResultsPersistence for MockData {
-    fn get_ft(&mut self, ft: usize) -> Option<&mut Ft> {
-        self.results.iter_mut().find(|x| x.id == ft)
+#[derive(Debug)]
+pub struct MemoryPersistence {
+    data: MockData
+}
+
+impl MemoryPersistence {
+    pub fn new() -> MemoryPersistence {
+        MemoryPersistence { data: MockData::new() }
+    }
+}
+
+impl Persistence for MemoryPersistence {
+    fn get_player(&self, p_id: &str) -> Option<Player> {
+        match self.data.players.iter().find(|x| x.nick.as_str() == p_id) {
+            None => None,
+            Some(p) => Some(p.clone())
+        }
     }
 
-    fn get_player(&mut self, p_id: &str) -> Option<&mut Player> {
-        self.players.iter_mut().find(|x| x.nick == p_id)
+    fn get_defi(&self, d_id: usize) -> Option<Defi> {
+        match self.data.results.iter().find(|x| x.id == d_id) {
+            None => None,
+            Some(d) => Some(d.clone())
+        }
     }
 
-    fn get_game(&mut self, g_id: &str) -> Option<&mut Game> {
-        self.games.iter_mut().find(|x| x.name == g_id)
+    fn get_defi_request(&self, dr_id: usize) -> Option<DefiRequest> {
+        match self.data.requests.iter().find(|x| x.id == dr_id) {
+            None => None,
+            Some(dr) => Some(dr.clone())
+        }
     }
 
-    fn get_all_ft(&self) -> Option<&[Ft]> {
-        if self.results.is_empty() {
+    fn get_all_defi(&self) -> Option<&[Defi]> {
+        if self.data.results.is_empty() {
             None
         }
         else {
-            Some(&self.results)
+            Some(&self.data.results)
         }
     }
 
-    fn get_results_with_game<'a, 'b>(&self, game: &'b str) -> Option<Vec<Ft>> {
-        let mut fts: Vec<Ft> = self.results.to_vec();
-        fts.retain(|x| x.game.name == game);
-        if fts.is_empty() { None } else { Some(fts) }
-    }
-
-    fn get_results_with_player<'a, 'b>(&self, player: &'b str) -> Option<Vec<Ft>> {
-        let mut fts: Vec<Ft> = self.results.to_vec();
-        fts.retain(|x| (x.player_a.nick == player) || (x.player_b.nick == player));
-        if fts.is_empty() { None } else { Some(fts) }
-    }
-
-    fn get_win_list<'a, 'b>(&self, player: &'b str) -> Option<Vec<Ft>> {
-        match self.get_results_with_player(player) {
-            None => None,
-            Some(games) => {
-                let mut wins: Vec<Ft> = games.to_vec();
-                wins.retain(|x| x.player_a.nick == player && x.score_a > x.score_b || x.player_b.nick == player && x.score_b > x.score_a);
-                if wins.is_empty() { None } else { Some(wins) }
-            }
+    fn get_all_defi_request(&self) -> Option<&[DefiRequest]> {
+        if self.data.requests.is_empty() {
+            None
+        }
+        else {
+            Some(&self.data.requests)
         }
     }
 
-    fn add_player(&mut self, player: &str) {
-        match self.players.iter().find(|x| x.nick == player) {
-            None => self.players.push(Player {nick: player.to_string()}),
-            Some(_) => ()
-        };
+    // fn get_results_with_game<'a, 'b>(&self, game: &'b str) -> Option<Vec<Ft>> {
+    //     let mut fts: Vec<Ft> = self.results.to_vec();
+    //     fts.retain(|x| x.game.name == game);
+    //     if fts.is_empty() { None } else { Some(fts) }
+    // }
+
+    // fn get_results_with_player<'a, 'b>(&self, player: &'b str) -> Option<Vec<Ft>> {
+    //     let mut fts: Vec<Ft> = self.results.to_vec();
+    //     fts.retain(|x| (x.player_a.nick == player) || (x.player_b.nick == player));
+    //     if fts.is_empty() { None } else { Some(fts) }
+    // }
+
+    // fn get_win_list<'a, 'b>(&self, player: &'b str) -> Option<Vec<Ft>> {
+    //     match self.get_results_with_player(player) {
+    //         None => None,
+    //         Some(games) => {
+    //             let mut wins: Vec<Ft> = games.to_vec();
+    //             wins.retain(|x| x.player_a.nick == player && x.score_a > x.score_b || x.player_b.nick == player && x.score_b > x.score_a);
+    //             if wins.is_empty() { None } else { Some(wins) }
+    //         }
+    //     }
+    // }
+
+    fn save_defi(&mut self, defi: &Defi) {
+        self.data.results.push(defi.clone());
     }
 
-    fn add_game(&mut self, game: &str) {
-        match self.games.iter().find(|x| x.name == game) {
-            None => self.games.push(Game{name: game.to_string()}),
-            Some(_) => ()
-        };
+    fn save_defi_request(&mut self, defi_request: &DefiRequest) {
+        self.data.requests.push(defi_request.clone());
     }
 
-    fn register_ft(&mut self, game: &str, player_a: &str, player_b: &str, score_a: u8, score_b: u8) {
-        let id = self.next_id;
-        let ft = Ft::new(id, Game{name: game.to_string()}, Player{nick: player_a.to_string()}, Player{nick: player_b.to_string()}, score_a, score_b);
-        self.add_player(player_a);
-        self.add_player(player_b);
-        self.results.push(ft);
-        self.next_id += 1;
+    fn save_player(&mut self, player: &Player) {
+        match self.data.players.iter().find(|x| x.nick == player.nick) {
+            None => self.data.players.push(player.clone()),
+            Some(_) => ()
+        };
     }
 }
 
 fn main() {
-    let mut mock_data = MockData::new();
+    let mut memory_persistence = MemoryPersistence::new();
 
-    mock_data.register_ft("BouleFighter", "el poncho", "quinonino", 5, 4);
-    mock_data.register_ft("Marvel VS BouleBoule", "el poncho", "quinonino", 5, 0);
-    mock_data.register_ft("BouleFighter", "el poncho", "quinonino", 0, 5);
-    {
-        match ResultsRules::validate_ft(mock_data.get_ft(0).expect("AIEAIEAIE"), "eldruz", true) {
-            Err(e) => println!("ERROR : {}", e),
-            Ok(_) => println!("Success")
-        }
-        match ResultsRules::validate_ft(mock_data.get_ft(0).expect("AIEAIEAIE"), "quinonino", true) {
-            Err(e) => println!("ERROR : {}", e),
-            Ok(_) => println!("Success")
-        }
-        match ResultsRules::validate_ft(mock_data.get_ft(1).expect("AIEAIEAIE"), "quinonino", true) {
-            Err(e) => println!("ERROR : {}", e),
-            Ok(_) => println!("Success")
-        }
-        match ResultsRules::validate_ft(mock_data.get_ft(2).expect("AIEAIEAIE"), "quinonino", true) {
-            Err(e) => println!("ERROR : {}", e),
-            Ok(_) => println!("Success")
-        }
-    }
+    let p_eldruz = Player { nick: String::from("eldruz") };
+    let p_joaquin = Player { nick: String::from("joaquin") };
+
+    let first_request = DefiRequest::create_defi_request(
+        0, 0, Game::ST, &p_eldruz, &p_joaquin, 5, 3
+    ).expect("error creating request");
+    let second_request = DefiRequest::create_defi_request(
+        1, 1, Game::GGXRD, &p_eldruz, &p_joaquin, 2, 5
+    ).expect("error creating request");
+    let third_request = DefiRequest::create_defi_request(
+        2, 2, Game::ST, &p_eldruz, &p_joaquin, 4, 5
+    ).expect("error creating request");
+
+    memory_persistence.save_defi_request(&first_request);
+    memory_persistence.save_defi_request(&second_request);
+    // memory_persistence.save_defi_request(&third_request);
 
     {
-        let winner = ResultsRules::winner(mock_data.get_ft(0).unwrap());
-        match winner {
-            Err(e) => println!("There's been some kind of mistake: {}", e),
-            Ok(player) => println!("Winner is: {}", player.nick)
-        }
-    }
-
-    {
-        match ResultsRules::is_winner(mock_data.get_ft(0).unwrap(), "quinonino") {
-            None => println!("THINK OF THE CHILDREN"),
-            Some(response) => {
-                if response {println!("EL PONCHO")} else {println!("ESCROC")}
+        let defi = match DefiRules::validate_defi(&mut memory_persistence, 0, String::from("joaquin"), true) {
+            Err(e) => {
+                println!("ERROR VALIDATING: {}", e);
+                None
+            },
+            Ok(defi) => {
+                println!("Success validating.");
+                memory_persistence.save_defi(&defi);
+                Some(defi)
             }
         };
     }
+    
+    
 
-    {
-        let wins = mock_data.get_win_list("el poncho");
-        println!("Wins of el poncho : {:?}", wins.unwrap());
-    }
+    // {
+    //     match ResultsRules::validate_ft(mock_data.get_ft(0).expect("AIEAIEAIE"), "eldruz", true) {
+    //         Err(e) => println!("ERROR : {}", e),
+    //         Ok(_) => println!("Success")
+    //     }
+    //     match ResultsRules::validate_ft(mock_data.get_ft(0).expect("AIEAIEAIE"), "quinonino", true) {
+    //         Err(e) => println!("ERROR : {}", e),
+    //         Ok(_) => println!("Success")
+    //     }
+    //     match ResultsRules::validate_ft(mock_data.get_ft(1).expect("AIEAIEAIE"), "quinonino", true) {
+    //         Err(e) => println!("ERROR : {}", e),
+    //         Ok(_) => println!("Success")
+    //     }
+    //     match ResultsRules::validate_ft(mock_data.get_ft(2).expect("AIEAIEAIE"), "quinonino", true) {
+    //         Err(e) => println!("ERROR : {}", e),
+    //         Ok(_) => println!("Success")
+    //     }
+    // }
 
-    {
-        let game_results = mock_data.get_results_with_game("BouleFighter");
-        println!("Defis joués sur BouleFighter: {:?}", game_results.unwrap());
-    }
+    // {
+    //     let winner = ResultsRules::winner(mock_data.get_ft(0).unwrap());
+    //     match winner {
+    //         Err(e) => println!("There's been some kind of mistake: {}", e),
+    //         Ok(player) => println!("Winner is: {}", player.nick)
+    //     }
+    // }
+
+    // {
+    //     match ResultsRules::is_winner(mock_data.get_ft(0).unwrap(), "quinonino") {
+    //         None => println!("THINK OF THE CHILDREN"),
+    //         Some(response) => {
+    //             if response {println!("EL PONCHO")} else {println!("ESCROC")}
+    //         }
+    //     };
+    // }
+
+    // {
+    //     let wins = mock_data.get_win_list("el poncho");
+    //     println!("Wins of el poncho : {:?}", wins.unwrap());
+    // }
+
+    // {
+    //     let game_results = mock_data.get_results_with_game("BouleFighter");
+    //     println!("Defis joués sur BouleFighter: {:?}", game_results.unwrap());
+    // }
 
 
-    println!("{:?}", mock_data);
+    println!("{:?}", memory_persistence);
 }
