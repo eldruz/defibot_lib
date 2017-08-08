@@ -1,55 +1,67 @@
 use model::*;
 
-pub trait ResultsPersistence {
-    fn get_player(&mut self, p_id: &str) -> Option<&mut Player>;
-    fn get_game(&mut self, g_id: &str) -> Option<&mut Game>;
-    fn get_ft(&mut self, ft: usize) -> Option<&mut Ft>;
+pub trait Persistence {
+    fn get_player(&self, p_id: &str) -> Option<Player>;
+    fn get_defi(&self, d_id: usize) -> Option<Defi>;
+    fn get_defi_request(&self, dr_id: usize) -> Option<DefiRequest>;
 
-    fn get_all_ft(&self) -> Option<&[Ft]>;
+    fn get_all_defi(&self) -> Option<&[Defi]>;
+    fn get_all_defi_request(&self) -> Option<&[DefiRequest]>;
 
-    fn get_results_with_game<'a, 'b>(&self, game: &'b str) -> Option<Vec<Ft>>;
-    fn get_results_with_player<'a, 'b>(&self, player: &'b str) -> Option<Vec<Ft>>;
-    fn get_win_list<'a, 'b>(&self, player: &'b str) -> Option<Vec<Ft>>;
+    fn save_defi(&mut self, defi: &Defi);
+    fn save_defi_request(&mut self, defi_request: &DefiRequest);
+    fn save_player(&mut self, player: &Player);
 
-    fn register_ft(&mut self, game: &str, player_a: &str, player_b: &str, score_a: u8, score_b: u8);
-    fn add_player(&mut self, player: &str);
-    fn add_game(&mut self, game: &str);
+    // fn get_results_with_game<'a, 'b>(&self, game: &'b str) -> Option<Vec<Ft>>;
+    // fn get_results_with_player<'a, 'b>(&self, player: &'b str) -> Option<Vec<Ft>>;
+    // fn get_win_list<'a, 'b>(&self, player: &'b str) -> Option<Vec<Ft>>;
 }
 
-pub struct ResultsRules {}
+pub struct DefiRules {}
 
-impl ResultsRules {
-    pub fn validate_ft<'a, 'b>(ft: &'a mut Ft, player: &'b str, confirm: bool) -> Result<&'a Ft, &'static str> {
-        if ft.player_b.nick == player && ft.state == FtState::Pending {
-            // change the state depending of the confirm
-            match confirm {
-                false => ft.state = FtState::Canceled,
-                true => ft.state = FtState::Confirmed
+impl DefiRules {
+    pub fn validate_defi<T>(gateway: &mut T, dr_id: usize, player_name: String, confirm: bool) -> Result<Defi, &'static str>
+        where T: Persistence
+    {
+        println!("Searching for request {} by player {}", dr_id, player_name);
+        let request_opt = gateway.get_defi_request(dr_id);
+        let player_opt = gateway.get_player(player_name.as_str());
+
+        match (request_opt, player_opt) {
+            (_, None) => {
+                Err("Player not found.")
+            },
+            (None, _) => {
+                Err("Request not found.")
             }
-            Ok(ft)
-        }
-        else {
-            Err("Player was not part of this FT")
-        }
-    }
-
-    pub fn winner(ft: &Ft) -> Result<&Player, &'static str> {
-        match ft.state {
-            FtState::Pending => Err("The result is not approved yet."),
-            FtState::Canceled => Err("The result was canceled."),
-            FtState::Confirmed => {
-                if ft.score_a > ft.score_b {
-                    Ok(&ft.player_a)
+            (Some(mut request), Some(player)) => {
+                if request.defi.result.player_b.nick == player.nick && request.state == DefiState::Pending {
+                    match confirm {
+                        false => request.change_state(DefiState::Canceled),
+                        true => request.change_state(DefiState::Confirmed)
+                    }
+                    gateway.save_defi_request(&request);
+                    gateway.save_defi(&request.defi);
+                    Ok(request.defi.clone())
                 }
                 else {
-                    Ok(&ft.player_b)
+                    Err("Player was not part of this FT")
                 }
             }
         }
     }
 
-    pub fn is_winner(ft: &Ft, player: &str) -> Option<bool> {
-        let player_win = ResultsRules::winner(ft);
+    pub fn winner(result: &DefiResult) -> Result<&Player, &'static str> {
+        if result.score_a > result.score_b {
+            Ok(&result.player_a)
+        }
+        else {
+            Ok(&result.player_b)
+        }
+    }
+
+    pub fn is_winner(result: &DefiResult, player: String) -> Option<bool> {
+        let player_win = DefiRules::winner(result);
         match player_win  {
             Err(_) => None,
             Ok(player_win) => {
