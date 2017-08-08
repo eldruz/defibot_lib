@@ -58,7 +58,7 @@ impl DefiRequest {
     }
 
     pub fn create_defi_request (id_request: usize,
-    id_defi: usize,game: Game, player_a: &Player, player_b: &Player, score_a: usize, score_b: usize)
+    id_defi: usize, game: Game, player_a: &Player, player_b: &Player, score_a: usize, score_b: usize)
     -> Result<DefiRequest, &'static str> {
         let defi_request = DefiRequest {
             id: id_request,

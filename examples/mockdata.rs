@@ -4,7 +4,6 @@ use defibot_lib::model::{
     Player,
     Game,
     Defi,
-    DefiResult,
     DefiRequest,
 };
 
@@ -45,12 +44,19 @@ impl Persistence for MemoryPersistence {
         }
     }
 
-    fn get_defi(&self, d_id: usize) -> Option<Defi> {
-        match self.data.results.iter().find(|x| x.id == d_id) {
-            None => None,
-            Some(d) => Some(d.clone())
-        }
-    }
+    // fn get_defi(&self, d_id: usize) -> Option<Defi> {
+    //     match self.data.results.iter().find(|x| x.id == d_id) {
+    //         None => None,
+    //         Some(d) => Some(d.clone())
+    //     }
+    // }
+
+    // fn get_defi_result(&self, d_id: usize) -> Option<DefiResult> {
+    //     match self.get_defi(d_id) {
+    //         None => None,
+    //         Some(d) => Some(d.result.clone())
+    //     }
+    // }
 
     fn get_defi_request(&self, dr_id: usize) -> Option<DefiRequest> {
         match self.data.requests.iter().find(|x| x.id == dr_id) {
@@ -59,23 +65,23 @@ impl Persistence for MemoryPersistence {
         }
     }
 
-    fn get_all_defi(&self) -> Option<&[Defi]> {
-        if self.data.results.is_empty() {
-            None
-        }
-        else {
-            Some(&self.data.results)
-        }
-    }
+    // fn get_all_defi(&self) -> Option<&[Defi]> {
+    //     if self.data.results.is_empty() {
+    //         None
+    //     }
+    //     else {
+    //         Some(&self.data.results)
+    //     }
+    // }
 
-    fn get_all_defi_request(&self) -> Option<&[DefiRequest]> {
-        if self.data.requests.is_empty() {
-            None
-        }
-        else {
-            Some(&self.data.requests)
-        }
-    }
+    // fn get_all_defi_request(&self) -> Option<&[DefiRequest]> {
+    //     if self.data.requests.is_empty() {
+    //         None
+    //     }
+    //     else {
+    //         Some(&self.data.requests)
+    //     }
+    // }
 
     // fn get_results_with_game<'a, 'b>(&self, game: &'b str) -> Option<Vec<Ft>> {
     //     let mut fts: Vec<Ft> = self.results.to_vec();
@@ -114,12 +120,12 @@ impl Persistence for MemoryPersistence {
         };
     }
 
-    fn save_player(&mut self, player: &Player) {
-        match self.data.players.iter().find(|x| x.nick == player.nick) {
-            None => self.data.players.push(player.clone()),
-            Some(_) => ()
-        };
-    }
+    // fn save_player(&mut self, player: &Player) {
+    //     match self.data.players.iter().find(|x| x.nick == player.nick) {
+    //         None => self.data.players.push(player.clone()),
+    //         Some(_) => ()
+    //     };
+    // }
 }
 
 fn main() {
@@ -140,7 +146,7 @@ fn main() {
 
     memory_persistence.save_defi_request(&first_request);
     memory_persistence.save_defi_request(&second_request);
-    // memory_persistence.save_defi_request(&third_request);
+    memory_persistence.save_defi_request(&third_request);
 
     {
         match DefiRules::validate_defi(&mut memory_persistence, 0, String::from("joaquin"), true) {
@@ -153,31 +159,22 @@ fn main() {
                 Some(defi)
             }
         };
+
+        match DefiRules::validate_defi(&mut memory_persistence, 1, String::from("eldruz"), true) {
+            Err(e) => {
+                println!("ERROR VALIDATING: {}", e);
+                None
+            },
+            Ok(defi) => {
+                println!("Success validating.");
+                Some(defi)
+            }
+        };
     }
     
-    
-
     // {
-    //     match ResultsRules::validate_ft(mock_data.get_ft(0).expect("AIEAIEAIE"), "eldruz", true) {
-    //         Err(e) => println!("ERROR : {}", e),
-    //         Ok(_) => println!("Success")
-    //     }
-    //     match ResultsRules::validate_ft(mock_data.get_ft(0).expect("AIEAIEAIE"), "quinonino", true) {
-    //         Err(e) => println!("ERROR : {}", e),
-    //         Ok(_) => println!("Success")
-    //     }
-    //     match ResultsRules::validate_ft(mock_data.get_ft(1).expect("AIEAIEAIE"), "quinonino", true) {
-    //         Err(e) => println!("ERROR : {}", e),
-    //         Ok(_) => println!("Success")
-    //     }
-    //     match ResultsRules::validate_ft(mock_data.get_ft(2).expect("AIEAIEAIE"), "quinonino", true) {
-    //         Err(e) => println!("ERROR : {}", e),
-    //         Ok(_) => println!("Success")
-    //     }
-    // }
-
-    // {
-    //     let winner = ResultsRules::winner(mock_data.get_ft(0).unwrap());
+    //     let winner = &memory_persistence.get_defi_result(0).unwrap();
+    //     let winner = DefiRules::winner(winner);
     //     match winner {
     //         Err(e) => println!("There's been some kind of mistake: {}", e),
     //         Ok(player) => println!("Winner is: {}", player.nick)
