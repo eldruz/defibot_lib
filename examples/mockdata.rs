@@ -101,11 +101,17 @@ impl Persistence for MemoryPersistence {
     // }
 
     fn save_defi(&mut self, defi: &Defi) {
-        self.data.results.push(defi.clone());
+        match self.data.results.iter().find(|x| x.id == defi.id) {
+            None => self.data.results.push(defi.clone()),
+            Some(_) => ()
+        }
     }
 
     fn save_defi_request(&mut self, defi_request: &DefiRequest) {
-        self.data.requests.push(defi_request.clone());
+        match self.data.requests.iter().position(|x| x.id == defi_request.id) {
+            None => self.data.requests.push(defi_request.clone()),
+            Some(pos) => self.data.requests[pos].state = defi_request.state.clone(),
+        };
     }
 
     fn save_player(&mut self, player: &Player) {
@@ -137,14 +143,13 @@ fn main() {
     // memory_persistence.save_defi_request(&third_request);
 
     {
-        let defi = match DefiRules::validate_defi(&mut memory_persistence, 0, String::from("joaquin"), true) {
+        match DefiRules::validate_defi(&mut memory_persistence, 0, String::from("joaquin"), true) {
             Err(e) => {
                 println!("ERROR VALIDATING: {}", e);
                 None
             },
             Ok(defi) => {
                 println!("Success validating.");
-                memory_persistence.save_defi(&defi);
                 Some(defi)
             }
         };
