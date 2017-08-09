@@ -86,3 +86,24 @@ impl DefiRequest {
         self.state = new_state;
     }
 }
+
+impl DefiResult {
+    pub fn winner(&self) -> Result<&Player, &'static str> {
+        if self.score_a > self.score_b {
+            Ok(&self.player_a)
+        }
+        else {
+            Ok(&self.player_b)
+        }
+    }
+
+    pub fn is_winner(&self, player: String) -> Option<bool> {
+        let player_win = self.winner();
+        match player_win  {
+            Err(_) => None,
+            Ok(player_win) => {
+                Some(player_win.nick == player)
+            }
+        }
+    }
+}
