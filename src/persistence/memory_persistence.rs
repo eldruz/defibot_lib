@@ -1,9 +1,4 @@
-use model::{
-    Player,
-    Game,
-    Defi,
-    DefiRequest,
-};
+use model::{Player, Defi, DefiRequest};
 
 use rules::request_rules::RequestPersistence;
 
@@ -16,15 +11,17 @@ pub struct MockData {
 
 impl MockData {
     fn new() -> MockData {
-        let default_pone = Player {nick: String::from("eldruz")};
-        let default_ptwo = Player {nick: String::from("joaquin")};
-        MockData { results: vec![], requests: vec![], players: vec![default_pone, default_ptwo] }
+        MockData {
+            results: vec![],
+            requests: vec![],
+            players: vec![],
+        }
     }
 }
 
 #[derive(Debug)]
 pub struct MemoryPersistence {
-    data: MockData
+    data: MockData,
 }
 
 impl MemoryPersistence {
@@ -35,37 +32,46 @@ impl MemoryPersistence {
 
 impl RequestPersistence for MemoryPersistence {
     fn get_player(&self, p_id: &str) -> Option<Player> {
-        match self.data.players.iter().find(|x| x.nick.as_str() == p_id) {
+        match self.data
+                  .players
+                  .iter()
+                  .find(|x| x.nick.as_str() == p_id) {
             None => None,
-            Some(p) => Some(p.clone())
+            Some(p) => Some(p.clone()),
         }
     }
 
     fn get_defi_request(&self, dr_id: usize) -> Option<DefiRequest> {
         match self.data.requests.iter().find(|x| x.id == dr_id) {
             None => None,
-            Some(dr) => Some(dr.clone())
+            Some(dr) => Some(dr.clone()),
         }
     }
 
     fn save_defi(&mut self, defi: &Defi) {
         match self.data.results.iter().find(|x| x.id == defi.id) {
             None => self.data.results.push(defi.clone()),
-            Some(_) => ()
+            Some(_) => (),
         }
     }
 
     fn save_defi_request(&mut self, defi_request: &DefiRequest) {
-        match self.data.requests.iter().position(|x| x.id == defi_request.id) {
+        match self.data
+                  .requests
+                  .iter()
+                  .position(|x| x.id == defi_request.id) {
             None => self.data.requests.push(defi_request.clone()),
             Some(pos) => self.data.requests[pos].state = defi_request.state.clone(),
         };
     }
 
     fn save_player(&mut self, player: &Player) {
-        match self.data.players.iter().find(|x| x.nick == player.nick) {
+        match self.data
+                  .players
+                  .iter()
+                  .find(|x| x.nick == player.nick) {
             None => self.data.players.push(player.clone()),
-            Some(_) => ()
+            Some(_) => (),
         };
     }
 }
