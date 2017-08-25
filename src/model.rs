@@ -42,24 +42,26 @@ pub struct DefiRequest {
 }
 
 impl DefiRequest {
-    fn check_defi (&self) -> Result<&DefiRequest, &'static str> {
+    fn check_defi(&self) -> Result<&DefiRequest, &'static str> {
         if self.defi.result.score_a == self.defi.result.score_b {
             Err("Cannot have the same score")
-        }
-        else if self.state != DefiState::Pending {
+        } else if self.state != DefiState::Pending {
             Err("Defi cannot be created as non pending")
-        }
-        else if self.defi.result.player_a == self.defi.result.player_b {
+        } else if self.defi.result.player_a == self.defi.result.player_b {
             Err("Defi is between two different people")
-        }
-        else {
+        } else {
             Ok(self)
         }
     }
 
-    pub fn create_defi_request (id_request: usize,
-    id_defi: usize, game: Game, player_a: &Player, player_b: &Player, score_a: usize, score_b: usize)
-    -> Result<DefiRequest, &'static str> {
+    pub fn create_defi_request(id_request: usize,
+                               id_defi: usize,
+                               game: Game,
+                               player_a: &Player,
+                               player_b: &Player,
+                               score_a: usize,
+                               score_b: usize)
+                               -> Result<DefiRequest, &'static str> {
         let defi_request = DefiRequest {
             id: id_request,
             defi: Defi {
@@ -69,8 +71,8 @@ impl DefiRequest {
                     player_a: player_a.clone(),
                     player_b: player_b.clone(),
                     score_a,
-                    score_b
-                }
+                    score_b,
+                },
             },
             player_name: player_b.nick.clone(),
             state: DefiState::Pending,
@@ -78,7 +80,7 @@ impl DefiRequest {
 
         match defi_request.check_defi() {
             Err(e) => Err(e),
-            Ok(_) => Ok(defi_request)
+            Ok(_) => Ok(defi_request),
         }
     }
 
@@ -91,19 +93,16 @@ impl DefiResult {
     pub fn winner(&self) -> Result<&Player, &'static str> {
         if self.score_a > self.score_b {
             Ok(&self.player_a)
-        }
-        else {
+        } else {
             Ok(&self.player_b)
         }
     }
 
     pub fn is_winner(&self, player: String) -> Option<bool> {
         let player_win = self.winner();
-        match player_win  {
+        match player_win {
             Err(_) => None,
-            Ok(player_win) => {
-                Some(player_win.nick == player)
-            }
+            Ok(player_win) => Some(player_win.nick == player),
         }
     }
 }
