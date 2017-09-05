@@ -53,7 +53,7 @@ named!(nicks<(&str, &str)>,
        )
 );
 
-named!(single_score<u8>,
+named!(single_score<usize>,
        map_res!(
            map_res!(
                ws!(digit),
@@ -61,7 +61,7 @@ named!(single_score<u8>,
        FromStr::from_str)
 );
 
-named!(score<(u8, u8)>,
+named!(score<(usize, usize)>,
        pair!(
            single_score,
            single_score
